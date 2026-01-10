@@ -29,11 +29,7 @@ const getTask = async (req,res)=>{
     try{
         const userId = req.userId
 
-        const task = await pool.query("SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC",[userId])
-
-        if(task.rows[0].length == 0){
-            return res.status(402).json({Message:"Task not created yet"})
-        }
+        const task = await pool.query("SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC",[userId]);
 
         res.json({
             Tasks:task.rows
@@ -51,18 +47,24 @@ const updateTask = async (req,res)=>{
         const {title,description,completed} = req.body
         const userId = req.userId
 
-        const task = await pool.query("SELECT * FROM tasks WHERE id = $1 AND user_id = $2",[id,userId])
+        const task = await pool.query("SELECT * FROM tasks WHERE id = $1 AND user_id = $2",[id, userId])
 
-        if(!task){
-            return res.status(404).json({Messsage:"Task not exist"})
+        if(task.rows.length === 0){
+            return res.status(404).json({Messsage:"Task not found"})
         }
 
+        const oldtasks = task.rows[0]
+
+        const updatedTitle = title !== undefined ? title : oldtasks.title
+        const updatedDescription = description !== undefined ? description : oldtasks.description
+        const updatedCompleted = completed !== undefined ? completed : oldtasks.completed 
+
         const updatedTask = await pool.query(
-            "UPDATE tasks SET title = $1, description = $2, completed = $3 WHERE id = $4 AND user_id = $5 RETURNING title,description,completed,created_at",
+            "UPDATE tasks SET title = $1, description = $2, completed = $3 WHERE id = $4 AND user_id = $5 RETURNING *",
             [
-                title || task.rows[0].title,
-                description !== undefined ? description:task.rows[0].description,
-                completed !== undefined ? completed:task.rows[0].completed,
+                updatedTitle,
+                updatedDescription,
+                updatedCompleted,
                 id,
                 userId
             ]

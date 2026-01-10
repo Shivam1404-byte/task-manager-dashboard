@@ -9,6 +9,12 @@ const app = express()
 
 const port = process.env.PORT || 5000
 
+app.use(cors({
+    origin:process.env.URL,
+    methods:["POST","GET","PUT","DELETE","OPTIONS"],
+    allowedHeaders:["Content-Type","Authorization"]
+}))
+
 app.use(express.json())
 
 app.use('/auth',authRoutes)
